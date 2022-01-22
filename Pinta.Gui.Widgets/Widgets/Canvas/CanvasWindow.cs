@@ -186,9 +186,9 @@ namespace Pinta
 			// Allow the user to zoom in/out with Ctrl-Mousewheel
 			if (args.Event.State.IsControlPressed () && args.Event.Direction == ScrollDirection.Smooth) {
 				if (args.Event.DeltaX > 0 || args.Event.DeltaY < 0)
-					document.Workspace.ZoomInFromMouseScroll (new Cairo.PointD (args.Event.X, args.Event.Y));
+					document.Workspace.ZoomInAroundWindowPoint (new Cairo.PointD (args.Event.X, args.Event.Y));
 				else if (args.Event.DeltaX < 0 || args.Event.DeltaY > 0)
-					document.Workspace.ZoomOutFromMouseScroll (new Cairo.PointD (args.Event.X, args.Event.Y));
+					document.Workspace.ZoomOutAroundWindowPoint (new Cairo.PointD (args.Event.X, args.Event.Y));
 
 				args.RetVal = true;
 			}

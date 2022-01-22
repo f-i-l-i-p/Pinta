@@ -39,13 +39,13 @@ namespace Pinta.Tools
 
 		private MouseButton mouseDown;
 		private bool is_drawing;
-		protected PointD shape_origin;
+		private PointD shape_origin;
 		private Rectangle last_dirty;
 		private static readonly int tolerance = 10;
 
 		public ZoomTool (IServiceManager services) : base (services)
 		{
-			mouseDown = 0;
+			mouseDown = MouseButton.None;
 
 			cursorZoomIn = new Gdk.Cursor (Gdk.Display.Default, Gtk.IconTheme.Default.LoadIcon (Pinta.Resources.Icons.ViewZoomIn, 16), 0, 0);
 			cursorZoomOut = new Gdk.Cursor (Gdk.Display.Default, Gtk.IconTheme.Default.LoadIcon (Pinta.Resources.Icons.ViewZoomOut, 16), 0, 0);
@@ -107,14 +107,12 @@ namespace Pinta.Tools
 			if (mouseDown == MouseButton.Left || mouseDown == MouseButton.Right) {
 				if (e.MouseButton == MouseButton.Left) {
 					if (Math.Abs (shape_origin.X - x) <= tolerance && Math.Abs (shape_origin.Y - y) <= tolerance) {
-						document.Workspace.ZoomIn ();
-						document.Workspace.RecenterView (x, y);
+						document.Workspace.ZoomInAroundCanvasPoint (e.PointDouble);
 					} else {
-						document.Workspace.ZoomToRectangle (CairoExtensions.PointsToRectangle (shape_origin, e.PointDouble));
+						document.Workspace.ZoomToCanvasRectangle (CairoExtensions.PointsToRectangle (shape_origin, e.PointDouble));
 					}
 				} else {
-					document.Workspace.ZoomOut ();
-					document.Workspace.RecenterView (x, y);
+					document.Workspace.ZoomOutAroundCanvasPoint (e.PointDouble);
 				}
 			}
 

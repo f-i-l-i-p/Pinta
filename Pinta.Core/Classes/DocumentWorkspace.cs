@@ -240,14 +240,24 @@ namespace Pinta.Core
 			ZoomAndRecenterView (ZoomType.ZoomOut, center_point: null); // Zoom out relative to the center of the viewport.
 		}
 
-		public void ZoomInFromMouseScroll (Cairo.PointD point)
+		public void ZoomInAroundWindowPoint (Cairo.PointD window_point)
 		{
-			ZoomAndRecenterView (ZoomType.ZoomIn, point); // Zoom in relative to mouse position.
+			ZoomAndRecenterView (ZoomType.ZoomIn, window_point); // Zoom in relative to mouse position.
 		}
 
-		public void ZoomOutFromMouseScroll (Cairo.PointD point)
+		public void ZoomInAroundCanvasPoint (Cairo.PointD canvas_point)
 		{
-			ZoomAndRecenterView (ZoomType.ZoomOut, point); // Zoom out relative to mouse position.
+			ZoomInAroundWindowPoint (CanvasPointToWindow (canvas_point));
+		}
+
+		public void ZoomOutAroundWindowPoint (Cairo.PointD window_point)
+		{
+			ZoomAndRecenterView (ZoomType.ZoomOut, window_point); // Zoom out relative to mouse position.
+		}
+
+		public void ZoomOutAroundCanvasPoint (Cairo.PointD canvas_point)
+		{
+			ZoomOutAroundWindowPoint (CanvasPointToWindow (canvas_point));
 		}
 
 		public void ZoomManually ()
@@ -255,7 +265,7 @@ namespace Pinta.Core
 			ZoomAndRecenterView (ZoomType.ZoomManually, center_point: null);
 		}
 
-		public void ZoomToRectangle (Cairo.Rectangle rect)
+		public void ZoomToCanvasRectangle (Cairo.Rectangle rect)
 		{
 			double ratio;
 

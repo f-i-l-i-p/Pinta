@@ -550,7 +550,7 @@ namespace Pinta
 
 		private void ZoomToSelection_Activated (object sender, EventArgs e)
 		{
-			PintaCore.Workspace.ActiveWorkspace.ZoomToRectangle (PintaCore.Workspace.ActiveDocument.Selection.SelectionPath.GetBounds ().ToCairoRectangle ());
+			PintaCore.Workspace.ActiveWorkspace.ZoomToCanvasRectangle (PintaCore.Workspace.ActiveDocument.Selection.SelectionPath.GetBounds ().ToCairoRectangle ());
 		}
 
 		private void ZoomToWindow_Activated (object sender, EventArgs e)
