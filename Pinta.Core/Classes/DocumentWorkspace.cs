@@ -204,6 +204,11 @@ namespace Pinta.Core
 		}
 
 		/// <summary>
+		/// Converts a point from window coordinates to canvas coordinates
+		/// </summary>
+		public Cairo.PointD WindowPointToCanvas (Cairo.PointD point) => WindowPointToCanvas (point.X, point.Y);
+
+		/// <summary>
 		/// Converts a point from canvas coordinates to window coordinates
 		/// </summary>
 		/// <param name='x'>
@@ -220,14 +225,19 @@ namespace Pinta.Core
 			return new Cairo.PointD (pt.X + Offset.X, pt.Y + Offset.Y);
 		}
 
+		/// <summary>
+		/// Converts a point from canvas coordinates to window coordinates
+		/// </summary>
+		public Cairo.PointD CanvasPointToWindow (Cairo.PointD point) => CanvasPointToWindow (point.X, point.Y);
+
 		public void ZoomIn ()
 		{
-			ZoomAndRecenterView (ZoomType.ZoomIn, new Cairo.PointD (-1, -1)); // Zoom in relative to the center of the viewport.
+			ZoomAndRecenterView (ZoomType.ZoomIn, center_point: null); // Zoom in relative to the center of the viewport.
 		}
 
 		public void ZoomOut ()
 		{
-			ZoomAndRecenterView (ZoomType.ZoomOut, new Cairo.PointD (-1, -1)); // Zoom out relative to the center of the viewport.
+			ZoomAndRecenterView (ZoomType.ZoomOut, center_point: null); // Zoom out relative to the center of the viewport.
 		}
 
 		public void ZoomInFromMouseScroll (Cairo.PointD point)
@@ -242,7 +252,7 @@ namespace Pinta.Core
 
 		public void ZoomManually ()
 		{
-			ZoomAndRecenterView (ZoomType.ZoomManually, new Cairo.PointD (-1, -1));
+			ZoomAndRecenterView (ZoomType.ZoomManually, center_point: null);
 		}
 
 		public void ZoomToRectangle (Cairo.Rectangle rect)
@@ -273,7 +283,7 @@ namespace Pinta.Core
 				CanvasSizeChanged (this, EventArgs.Empty);
 		}
 
-		private void ZoomAndRecenterView (ZoomType zoomType, Cairo.PointD point)
+		private void ZoomAndRecenterView (ZoomType zoomType, Cairo.PointD? center_point)
 		{
 			if (zoomType == ZoomType.ZoomOut && (CanvasSize.Width == 1 || CanvasSize.Height == 1))
 				return; //Can't zoom in past a 1x1 px canvas
@@ -292,15 +302,14 @@ namespace Pinta.Core
 
 			Gtk.Viewport view = (Gtk.Viewport) Canvas.Parent;
 
-			bool adjustOnMousePosition = point.X >= 0.0 && point.Y >= 0.0;
+			// If no point was specified, zoom relative to the center of the screen.
+			if (!center_point.HasValue) {
+				center_point = new Cairo.PointD (
+					view.Hadjustment.Value + (view.Hadjustment.PageSize / 2.0),
+					view.Vadjustment.Value + (view.Vadjustment.PageSize / 2.0));
+			}
 
-			double center_x = adjustOnMousePosition ?
-				point.X : view.Hadjustment.Value + (view.Hadjustment.PageSize / 2.0);
-			double center_y = adjustOnMousePosition ?
-				point.Y : view.Vadjustment.Value + (view.Vadjustment.PageSize / 2.0);
-
-			center_x = (center_x - Offset.X) / Scale;
-			center_y = (center_y - Offset.Y) / Scale;
+			var canvas_point = WindowPointToCanvas (center_point.Value);
 
 			if (zoomType == ZoomType.ZoomIn || zoomType == ZoomType.ZoomOut) {
 				int i = 0;
@@ -342,6 +351,9 @@ namespace Pinta.Core
 				}
 			}
 
+			var scroll_x = view.Hadjustment.Value;
+			var scroll_y = view.Vadjustment.Value;
+
 			PintaCore.Actions.View.UpdateCanvasScale ();
 
 			// Quick fix : need to manually update Upper limit because the value is not changing after updating the canvas scale.
@@ -349,7 +361,10 @@ namespace Pinta.Core
 			view.Hadjustment.Upper = CanvasSize.Width < view.Hadjustment.PageSize ? view.Hadjustment.PageSize : CanvasSize.Width;
 			view.Vadjustment.Upper = CanvasSize.Height < view.Vadjustment.PageSize ? view.Vadjustment.PageSize : CanvasSize.Height;
 
-			RecenterView (center_x, center_y);
+			// Scroll so that the canvas position under 'center_point' is still the same after zooming.
+			var new_center_point = CanvasPointToWindow (canvas_point);
+			view.Hadjustment.Value = scroll_x + new_center_point.X - center_point.Value.X;
+			view.Vadjustment.Value = scroll_y + new_center_point.Y - center_point.Value.Y;
 
 			PintaCore.Actions.View.ResumeZoomUpdate ();
 			if (Canvas.Window != null)
